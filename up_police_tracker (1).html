@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UP Police Constable — Study Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #111418;
+    --bg3: #181c22;
+    --border: #2a3040;
+    --accent: #d4a843;
+    --accent2: #4e9a6f;
+    --accent3: #3b7ec8;
+    --danger: #c04a4a;
+    --text: #c8cdd8;
+    --text-dim: #6b7280;
+    --text-bright: #eef0f4;
+    --gold: #d4a843;
+    --green: #4e9a6f;
+    --blue: #3b7ec8;
+    --red: #e05252;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* HEADER */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,12,15,0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 16px; }
+
+  .badge-police {
+    width: 40px; height: 40px;
+    background: var(--gold);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    animation: badgePulse 3s ease-in-out infinite;
+  }
+
+  @keyframes badgePulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3) drop-shadow(0 0 8px rgba(212,168,67,0.6)); }
+  }
+
+  .title-block h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .title-block p {
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* EXPORT BTN */
+  .export-btn {
+    padding: 9px 18px;
+    background: rgba(212,168,67,0.12);
+    border: 1px solid rgba(212,168,67,0.4);
+    border-radius: 8px;
+    color: var(--gold);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .export-btn:hover {
+    background: rgba(212,168,67,0.22);
+    border-color: var(--gold);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(212,168,67,0.15);
+  }
+  .export-btn:active { transform: translateY(0); }
+
+  /* EXPORT MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+  }
+  .modal-overlay.open .modal-box { transform: translateY(0); }
+  .modal-title {
+    font-size: 20px; font-weight: 700; color: var(--text-bright);
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .modal-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; }
+  .modal-preview {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  #exportCanvas { width: 100%; display: block; }
+  .modal-btns { display: flex; gap: 12px; justify-content: center; }
+  .btn-primary {
+    padding: 11px 24px;
+    background: var(--gold);
+    border: none; border-radius: 8px;
+    color: #111; font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary:hover { background: #e6b84e; transform: translateY(-1px); }
+  .btn-ghost {
+    padding: 11px 24px;
+    background: transparent;
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text-dim); font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+
+  /* COUNTDOWN */
+  .countdown {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .cd-unit {
+    text-align: center;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cd-unit::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1s;
+  }
+  .cd-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .cd-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* MAIN LAYOUT */
+  .container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* OVERALL PROGRESS */
+  .overview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card.gold::before { background: var(--gold); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-card.red::before { background: var(--red); }
+
+  .stat-icon { font-size: 28px; margin-bottom: 8px; }
+  .stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-bright);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .stat-bar {
+    margin-top: 12px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  .gold .stat-bar-fill { background: var(--gold); }
+  .green .stat-bar-fill { background: var(--green); }
+  .blue .stat-bar-fill { background: var(--blue); }
+  .red .stat-bar-fill { background: var(--red); }
+
+  /* SUBJECTS */
+  .subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .subject-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .subject-card:hover { border-color: rgba(212,168,67,0.3); }
+
+  .subject-header {
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+  }
+  .subject-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 20px; right: 20px;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .subject-info { display: flex; align-items: center; gap: 14px; }
+  .subject-emoji { font-size: 28px; }
+  .subject-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: 1px;
+  }
+  .subject-hindi {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-family: 'Noto Sans Devanagari', sans-serif;
+  }
+
+  .subject-progress-ring {
+    position: relative;
+    width: 56px; height: 56px;
+    flex-shrink: 0;
+  }
+  .progress-ring-circle { transform: rotate(-90deg); transform-origin: 50% 50%; }
+  .progress-ring-bg { stroke: var(--border); }
+  .progress-ring-fill {
+    stroke-dasharray: 138;
+    stroke-dashoffset: 138;
+    transition: stroke-dashoffset 0.8s ease;
+    stroke-linecap: round;
+  }
+  .progress-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  .subject-body { padding: 0; }
+  .subject-body.collapsed { display: none; }
+
+  /* CHAPTER */
+  .chapter-item {
+    border-bottom: 1px solid rgba(42,48,64,0.5);
+    transition: background 0.15s;
+  }
+  .chapter-item:last-child { border-bottom: none; }
+  .chapter-item:hover { background: rgba(255,255,255,0.02); }
+
+  .chapter-row {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .chapter-status {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .chapter-status.done {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+  .chapter-status.progress {
+    background: rgba(212,168,67,0.15);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .chapter-status.pending {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-dim);
+  }
+
+  .chapter-name {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .chapter-name.done-text {
+    text-decoration: line-through;
+    color: var(--text-dim);
+  }
+
+  .chapter-tags { display: flex; gap: 6px; align-items: center; }
+  .tag {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .tag.pdf-tag { background: rgba(59,126,200,0.15); color: var(--blue); border-color: rgba(59,126,200,0.3); }
+  .tag.pdf-tag.done { background: var(--blue); color: #fff; }
+  .tag.mock-tag { background: rgba(212,168,67,0.1); color: var(--gold); border-color: rgba(212,168,67,0.3); }
+  .tag.mock-tag.done { background: var(--gold); color: #111; }
+  .tag.video-tag { background: rgba(78,154,111,0.1); color: var(--green); border-color: rgba(78,154,111,0.3); }
+  .tag.video-tag.done { background: var(--green); color: #fff; }
+
+  .chapter-chevron {
+    font-size: 10px;
+    color: var(--text-dim);
+    transition: transform 0.2s;
+  }
+  .chapter-chevron.open { transform: rotate(90deg); }
+
+  .chapter-notes-area {
+    padding: 0 20px 12px 60px;
+    display: none;
+  }
+  .chapter-notes-area.open { display: block; }
+  .notes-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    resize: none;
+    height: 60px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .notes-input:focus { border-color: var(--gold); }
+  .notes-input::placeholder { color: var(--text-dim); }
+
+  /* MOTIVATIONAL BANNER */
+  .motive-bar {
+    background: linear-gradient(135deg, rgba(212,168,67,0.08) 0%, rgba(78,154,111,0.05) 100%);
+    border: 1px solid rgba(212,168,67,0.2);
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .motive-icon { font-size: 28px; flex-shrink: 0; }
+  .motive-text {
+    font-size: 15px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .motive-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  /* TODAY LOG */
+  .today-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .today-title {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .today-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .day-dot {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 6px 4px;
+    font-size: 9px;
+    text-align: center;
+  }
+  .day-dot .day-label { color: var(--text-dim); letter-spacing: 0.5px; margin-bottom: 4px; }
+  .day-dot .day-num { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--text); font-weight: 700; }
+  .day-dot.studied { background: rgba(78,154,111,0.15); border-color: var(--green); }
+  .day-dot.studied .day-num { color: var(--green); }
+  .day-dot.today { border-color: var(--gold); }
+  .day-dot.today .day-num { color: var(--gold); }
+
+  /* SEARCH / FILTER */
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--gold); }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .filter-btn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text-dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(212,168,67,0.08);
+  }
+
+  /* SCROLL BAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg2);
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    padding: 14px 20px;
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 300px;
+    letter-spacing: 0.5px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* SECTION HEADER */
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .overview { grid-template-columns: repeat(2, 1fr); }
+    .subjects-grid { grid-template-columns: 1fr; }
+    .countdown { display: none; }
+  }
+  @media (max-width: 600px) {
+    .header { padding: 0 16px; }
+    .container { padding: 16px; }
+    .overview { grid-template-columns: repeat(2, 1fr); }
+    .today-grid { grid-template-columns: repeat(7, 1fr); }
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .stat-card, .subject-card, .motive-bar, .today-section {
+    animation: fadeInUp 0.4s ease both;
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+  .subject-card:nth-child(1) { animation-delay: 0.25s; }
+  .subject-card:nth-child(2) { animation-delay: 0.3s; }
+  .subject-card:nth-child(3) { animation-delay: 0.35s; }
+  .subject-card:nth-child(4) { animation-delay: 0.4s; }
+
+  /* EMPTY STATE */
+  .no-results {
+    text-align: center;
+    padding: 48px;
+    color: var(--text-dim);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  .chapter-count-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--bg3);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <div class="badge-police"></div>
+    <div class="title-block">
+      <h1>UP Police Tracker</h1>
+      <p>Constable 2026 — 32679 Posts</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <button class="export-btn" onclick="openExportModal()">📸 Export Progress</button>
+    <div class="countdown" id="countdown">
+      <div class="cd-unit"><div class="cd-num" id="cd-days">--</div><div class="cd-label">Days</div></div>
+      <div class="cd-unit"><div class="cd-num" id="cd-hrs">--</div><div class="cd-label">Hrs</div></div>
+      <div class="cd-unit"><div class="cd-num" id="cd-min">--</div><div class="cd-label">Min</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- MOTIVATIONAL BANNER -->
+  <div class="motive-bar">
+    <div class="motive-icon" id="motive-icon">🎯</div>
+    <div>
+      <div class="motive-text" id="motive-text">30 lakh competitors. Only one YOU. Make every 1-2 hours count.</div>
+      <div class="motive-sub" id="motive-sub">Exam: June 8, 2026 — Keep going, constable!</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="section-title">Overall Progress</div>
+  <div class="overview">
+    <div class="stat-card gold">
+      <div class="stat-icon">📚</div>
+      <div class="stat-num" id="stat-total">0</div>
+      <div class="stat-label">Total Chapters</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="bar-total" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-num" id="stat-done">0</div>
+      <div class="stat-label">Completed</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="bar-done" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-icon">📄</div>
+      <div class="stat-num" id="stat-pdf">0</div>
+      <div class="stat-label">PDFs Read</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="bar-pdf" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-num" id="stat-mock">0</div>
+      <div class="stat-label">Mocks Done</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="bar-mock" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- WEEKLY CALENDAR -->
+  <div class="today-section">
+    <div class="today-title">⚡ Weekly Study Log — Click to mark studied</div>
+    <div class="today-grid" id="weekGrid"></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <input type="text" class="search-input" placeholder="🔍  Search chapter / topic..." id="searchInput" oninput="filterChapters()">
+    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn" onclick="setFilter('pending', this)">Pending</button>
+    <button class="filter-btn" onclick="setFilter('progress', this)">In Progress</button>
+    <button class="filter-btn" onclick="setFilter('done', this)">Done</button>
+  </div>
+
+  <!-- SUBJECTS -->
+  <div class="section-title">Subject-wise Chapters</div>
+  <div class="subjects-grid" id="subjectsGrid"></div>
+
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal" onclick="handleModalClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">📸 Progress Report</div>
+    <div class="modal-sub" id="exportSubtitle">Your study snapshot — proof of your hardwork!</div>
+    <div class="modal-preview">
+      <canvas id="exportCanvas"></canvas>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="downloadExport()">⬇ Download Image</button>
+      <button class="btn-ghost" onclick="closeExportModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toastIcon">✅</span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//   DATA: SUBJECTS + CHAPTERS
+// ══════════════════════════════════════════════
+const SUBJECTS = [
+  {
+    id: 'hindi',
+    name: 'General Hindi',
+    hindi: 'सामान्य हिंदी',
+    emoji: '📝',
+    color: '#e05252',
+    strokeColor: '#e05252',
+    chapters: [
+      'संधि और संधि विच्छेद', 'समास', 'विलोम शब्द', 'पर्यायवाची शब्द',
+      'मुहावरे और लोकोक्तियाँ', 'वाक्य शुद्धि (अशुद्धि)', 'तत्सम – तद्भव',
+      'लिंग, वचन, कारक', 'काल (Tense)', 'अलंकार', 'रस, छंद, गुण',
+      'अपठित गद्यांश', 'वर्तनी', 'एकार्थी व अनेकार्थी शब्द',
+      'उपसर्ग और प्रत्यय', 'शब्द रचना'
+    ]
+  },
+  {
+    id: 'gs',
+    name: 'General Studies',
+    hindi: 'सामान्य ज्ञान / विज्ञान',
+    emoji: '🌍',
+    color: '#4e9a6f',
+    strokeColor: '#4e9a6f',
+    chapters: [
+      '— HISTORY —',
+      'प्राचीन भारत (Ancient India)', 'मध्यकालीन भारत (Medieval India)',
+      'आधुनिक भारत (Modern India)', 'स्वतंत्रता संग्राम (Freedom Struggle)',
+      'उत्तर प्रदेश का इतिहास (UP History)',
+      '— GEOGRAPHY —',
+      'भारत का भूगोल (India Geography)', 'विश्व भूगोल (World Geography)',
+      'उत्तर प्रदेश का भूगोल', 'नदियाँ, पहाड़, मैदान',
+      '— POLITY —',
+      'भारतीय संविधान (Constitution)', 'मौलिक अधिकार (Fundamental Rights)',
+      'संसद और राज्य विधानमंडल', 'स्थानीय शासन (Local Govt)',
+      '— ECONOMICS —',
+      'भारतीय अर्थव्यवस्था (Indian Economy)', 'बजट और योजनाएं',
+      '— SCIENCE —',
+      'Physics Basics (भौतिकी)', 'Chemistry Basics (रसायन)',
+      'Biology Basics (जीव विज्ञान)', 'Computer & Technology',
+      '— CURRENT AFFAIRS —',
+      'राष्ट्रीय करंट अफेयर्स', 'यूपी करंट अफेयर्स', 'खेल और पुरस्कार'
+    ]
+  },
+  {
+    id: 'maths',
+    name: 'Numerical Ability',
+    hindi: 'संख्यात्मक अभियोग्यता',
+    emoji: '🔢',
+    color: '#d4a843',
+    strokeColor: '#d4a843',
+    chapters: [
+      'Number System (संख्या पद्धति)', 'LCM & HCF', 'Simplification',
+      'Percentage (प्रतिशत)', 'Profit & Loss (लाभ-हानि)',
+      'Ratio & Proportion (अनुपात)', 'Average (औसत)',
+      'Simple Interest (साधारण ब्याज)', 'Compound Interest (चक्रवृद्धि ब्याज)',
+      'Time & Work (समय-कार्य)', 'Speed, Distance & Time (गति-दूरी)',
+      'Mensuration (क्षेत्रमिति)', 'Algebra (बीजगणित)',
+      'Geometry (ज्यामिति)', 'Statistics (सांख्यिकी)',
+      'Miscellaneous Problems'
+    ]
+  },
+  {
+    id: 'reasoning',
+    name: 'Mental Ability',
+    hindi: 'मानसिक अभिरुचि / तार्किक',
+    emoji: '🧠',
+    color: '#3b7ec8',
+    strokeColor: '#3b7ec8',
+    chapters: [
+      'Analogy (सादृश्यता)', 'Series (श्रृंखला)', 'Coding – Decoding',
+      'Direction & Distance (दिशा)', 'Blood Relations (रक्त संबंध)',
+      'Ranking & Arrangement', 'Syllogism (न्याय वाक्य)',
+      'Venn Diagram (वेन आरेख)', 'Statement & Conclusion',
+      'Missing Numbers', 'Clock & Calendar',
+      'Non-Verbal Reasoning (आकृति)', 'Puzzle (पहेली)',
+      'Matrix', 'Order & Ranking'
+    ]
+  }
+];
+
+// Chapter state: { status: 'pending'|'progress'|'done', pdf: bool, mock: bool, video: bool, notes: '' }
+let state = {};
+let weekStudied = {};
+let currentFilter = 'all';
+
+// ══════════════════════════════════════════════
+//   STORAGE — localStorage (works on Netlify, free, persists across sessions)
+// ══════════════════════════════════════════════
+const LS_STATE = 'upp_constable_state_v2';
+const LS_WEEK  = 'upp_constable_week_v2';
+
+function saveState() {
+  try {
+    localStorage.setItem(LS_STATE, JSON.stringify(state));
+    localStorage.setItem(LS_WEEK,  JSON.stringify(weekStudied));
+  } catch(e) { console.warn('localStorage save failed:', e); }
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(LS_STATE);
+    if (s) state = JSON.parse(s);
+    const w = localStorage.getItem(LS_WEEK);
+    if (w) weekStudied = JSON.parse(w);
+  } catch(e) { console.warn('localStorage load failed:', e); }
+}
+
+function getChapKey(subjId, chapIdx) { return `${subjId}__${chapIdx}`; }
+
+function getChapState(subjId, chapIdx) {
+  const key = getChapKey(subjId, chapIdx);
+  if (!state[key]) state[key] = { status: 'pending', pdf: false, mock: false, video: false, notes: '' };
+  return state[key];
+}
+
+// ══════════════════════════════════════════════
+//   COUNTDOWN
+// ══════════════════════════════════════════════
+function updateCountdown() {
+  const exam = new Date('2026-06-08T00:00:00');
+  const now = new Date();
+  const diff = exam - now;
+  if (diff <= 0) {
+    document.getElementById('cd-days').textContent = '00';
+    document.getElementById('cd-hrs').textContent = '00';
+    document.getElementById('cd-min').textContent = '00';
+    return;
+  }
+  const days = Math.floor(diff / 86400000);
+  const hrs = Math.floor((diff % 86400000) / 3600000);
+  const min = Math.floor((diff % 3600000) / 60000);
+  document.getElementById('cd-days').textContent = String(days).padStart(2,'0');
+  document.getElementById('cd-hrs').textContent = String(hrs).padStart(2,'0');
+  document.getElementById('cd-min').textContent = String(min).padStart(2,'0');
+}
+
+// ══════════════════════════════════════════════
+//   MOTIVATIONAL MESSAGES
+// ══════════════════════════════════════════════
+const motives = [
+  { icon: '🎯', text: '30 lakh competitors. Only one YOU. Make every 1-2 hours count.', sub: 'Focus on PDFs. Skip nothing. Revision is victory.' },
+  { icon: '🔥', text: 'Every chapter you finish is one step closer to wearing that uniform.', sub: '5-day job + study = pure dedication. You\'ve got this!' },
+  { icon: '⭐', text: 'Service to people starts with service to yourself — study hard today!', sub: 'UP Police Constable 2026 — Your seat is waiting.' },
+  { icon: '💪', text: '12-hour shift done? Still studying? That\'s a constable\'s spirit!', sub: 'The exam is easy but competition is high — consistency wins.' },
+  { icon: '🏆', text: 'When you clear this, SSC CGL prep becomes 10x easier. Win first, then win bigger!', sub: 'June 8, 2026 — Mark it. Own it.' },
+];
+
+function setMotivation() {
+  const m = motives[Math.floor(Math.random() * motives.length)];
+  document.getElementById('motive-icon').textContent = m.icon;
+  document.getElementById('motive-text').textContent = m.text;
+  document.getElementById('motive-sub').textContent = m.sub;
+}
+
+// ══════════════════════════════════════════════
+//   WEEKLY GRID
+// ══════════════════════════════════════════════
+const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+
+function renderWeekGrid() {
+  const grid = document.getElementById('weekGrid');
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - dayOfWeek);
+
+  grid.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = d.toISOString().slice(0,10);
+    const isToday = d.toDateString() === today.toDateString();
+    const studied = weekStudied[key];
+    const div = document.createElement('div');
+    div.className = 'day-dot' + (studied ? ' studied' : '') + (isToday ? ' today' : '');
+    div.innerHTML = `<div class="day-label">${DAYS[d.getDay()]}</div><div class="day-num">${d.getDate()}</div><div style="font-size:14px;margin-top:2px">${studied ? '✅' : '·'}</div>`;
+    div.onclick = () => toggleStudied(key, div);
+    grid.appendChild(div);
+  }
+}
+
+function toggleStudied(key, el) {
+  weekStudied[key] = !weekStudied[key];
+  el.className = 'day-dot' + (weekStudied[key] ? ' studied' : '');
+  const today = new Date();
+  if (new Date(key).toDateString() === today.toDateString()) el.classList.add('today');
+  if (weekStudied[key]) {
+    el.querySelector('div:last-child').textContent = '✅';
+    showToast('📅', 'Study day logged! Keep it up!');
+  } else {
+    el.querySelector('div:last-child').textContent = '·';
+  }
+  saveState();
+}
+
+// ══════════════════════════════════════════════
+//   RENDER SUBJECTS
+// ══════════════════════════════════════════════
+function isHeading(name) { return name.startsWith('—') && name.endsWith('—'); }
+
+function renderSubjects() {
+  const grid = document.getElementById('subjectsGrid');
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  grid.innerHTML = '';
+  let anyVisible = false;
+
+  SUBJECTS.forEach(subj => {
+    const chapterStates = subj.chapters
+      .filter(c => !isHeading(c))
+      .map((_, i) => {
+        const realIdx = subj.chapters.indexOf(subj.chapters.filter(c => !isHeading(c))[i]);
+        return getChapState(subj.id, realIdx);
+      });
+
+    const total = chapterStates.length;
+    const done = chapterStates.filter(c => c.status === 'done').length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    // Filter check
+    let visibleChaps = subj.chapters.map((name, idx) => ({ name, idx })).filter(({ name, idx }) => {
+      if (isHeading(name)) return false;
+      const cs = getChapState(subj.id, idx);
+      if (query && !name.toLowerCase().includes(query)) return false;
+      if (currentFilter === 'done' && cs.status !== 'done') return false;
+      if (currentFilter === 'pending' && cs.status !== 'pending') return false;
+      if (currentFilter === 'progress' && cs.status !== 'progress') return false;
+      return true;
+    });
+
+    if (query && visibleChaps.length === 0) return;
+    if ((currentFilter !== 'all') && visibleChaps.length === 0) return;
+
+    anyVisible = true;
+
+    const card = document.createElement('div');
+    card.className = 'subject-card';
+    card.dataset.subjId = subj.id;
+
+    // Determine which chapters to show
+    let chaptersToShow = query || currentFilter !== 'all'
+      ? visibleChaps
+      : subj.chapters.map((name, idx) => ({ name, idx }));
+
+    const circumference = 138;
+    const offset = circumference - (pct / 100) * circumference;
+
+    card.innerHTML = `
+      <div class="subject-header" onclick="toggleSubject('${subj.id}', this)">
+        <div class="subject-info">
+          <div class="subject-emoji">${subj.emoji}</div>
+          <div>
+            <div class="subject-name">${subj.name}</div>
+            <div class="subject-hindi">${subj.hindi}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="chapter-count-badge">${done}/${total}</span>
+          <div class="subject-progress-ring">
+            <svg width="56" height="56" viewBox="0 0 56 56">
+              <circle class="progress-ring-circle progress-ring-bg" cx="28" cy="28" r="22" stroke-width="4" fill="none"/>
+              <circle class="progress-ring-circle progress-ring-fill" cx="28" cy="28" r="22" stroke-width="4" fill="none"
+                stroke="${subj.strokeColor}"
+                style="stroke-dashoffset:${offset}"/>
+            </svg>
+            <div class="progress-ring-text">${pct}%</div>
+          </div>
+        </div>
+      </div>
+      <div class="subject-body" id="body_${subj.id}">
+        ${chaptersToShow.map(({ name, idx }) => renderChapter(subj.id, name, idx)).join('')}
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+
+  if (!anyVisible) {
+    grid.innerHTML = '<div class="no-results">🔍 No chapters match your filter. Try a different search.</div>';
+  }
+
+  updateStats();
+}
+
+function renderChapter(subjId, name, idx) {
+  if (isHeading(name)) {
+    return `<div style="padding:10px 20px 4px;font-size:11px;letter-spacing:2px;color:var(--text-dim);font-weight:700;background:rgba(0,0,0,0.2)">${name}</div>`;
+  }
+
+  const cs = getChapState(subjId, idx);
+  const statusClass = cs.status;
+  const icon = cs.status === 'done' ? '✓' : cs.status === 'progress' ? '▶' : '○';
+
+  return `
+  <div class="chapter-item" id="item_${subjId}_${idx}">
+    <div class="chapter-row">
+      <div class="chapter-status ${statusClass}" title="Click to cycle status" onclick="cycleStatus('${subjId}',${idx})">
+        ${icon}
+      </div>
+      <div class="chapter-name ${cs.status === 'done' ? 'done-text' : ''}" title="${name}">
+        ${name}
+      </div>
+      <div class="chapter-tags">
+        <span class="tag pdf-tag ${cs.pdf ? 'done' : ''}" onclick="toggleTag('${subjId}',${idx},'pdf')" title="PDF Read">PDF</span>
+        <span class="tag mock-tag ${cs.mock ? 'done' : ''}" onclick="toggleTag('${subjId}',${idx},'mock')" title="Mock Test Done">MOCK</span>
+        <span class="tag video-tag ${cs.video ? 'done' : ''}" onclick="toggleTag('${subjId}',${idx},'video')" title="Video/Lecture">VID</span>
+      </div>
+      <span class="chapter-chevron ${cs.notes ? 'open' : ''}" onclick="toggleNotes('${subjId}',${idx})" title="Add notes">▶</span>
+    </div>
+    <div class="chapter-notes-area ${cs.notes ? 'open' : ''}" id="notes_${subjId}_${idx}">
+      <textarea class="notes-input" placeholder="Add notes, formulas, important points..." 
+        onblur="saveNotes('${subjId}',${idx},this.value)"
+        onfocus="this.style.height='90px'"
+      >${cs.notes || ''}</textarea>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//   ACTIONS
+// ══════════════════════════════════════════════
+function cycleStatus(subjId, idx) {
+  const cs = getChapState(subjId, idx);
+  const cycle = { pending: 'progress', progress: 'done', done: 'pending' };
+  const prev = cs.status;
+  cs.status = cycle[cs.status];
+  state[getChapKey(subjId, idx)] = cs;
+
+  const msgs = {
+    progress: ['🔥', 'Chapter started! Keep pushing!'],
+    done: ['🎉', 'Chapter complete! One step closer!'],
+    pending: ['🔄', 'Chapter reset to pending.']
+  };
+  const [icon, msg] = msgs[cs.status];
+  showToast(icon, msg);
+  saveState();
+  renderSubjects();
+}
+
+function toggleTag(subjId, idx, tag) {
+  const cs = getChapState(subjId, idx);
+  cs[tag] = !cs[tag];
+  state[getChapKey(subjId, idx)] = cs;
+
+  const labels = { pdf: cs.pdf ? '📄 PDF marked as read!' : '📄 PDF unmarked.', mock: cs.mock ? '🎯 Mock test done!' : '🎯 Mock unmarked.', video: cs.video ? '🎬 Video marked done!' : '🎬 Video unmarked.' };
+  showToast(tag === 'pdf' ? '📄' : tag === 'mock' ? '🎯' : '🎬', labels[tag]);
+  saveState();
+  renderSubjects();
+}
+
+function toggleNotes(subjId, idx) {
+  const area = document.getElementById(`notes_${subjId}_${idx}`);
+  if (area) {
+    area.classList.toggle('open');
+    const chevron = area.previousElementSibling.querySelector('.chapter-chevron');
+    if (chevron) chevron.classList.toggle('open');
+    if (area.classList.contains('open')) {
+      area.querySelector('textarea').focus();
+    }
+  }
+}
+
+function saveNotes(subjId, idx, val) {
+  const cs = getChapState(subjId, idx);
+  cs.notes = val.trim();
+  state[getChapKey(subjId, idx)] = cs;
+  saveState();
+  // Update chevron
+  const chevron = document.querySelector(`#item_${subjId}_${idx} .chapter-chevron`);
+  if (chevron) {
+    if (val.trim()) chevron.classList.add('open');
+    else chevron.classList.remove('open');
+  }
+}
+
+function toggleSubject(subjId, headerEl) {
+  const body = document.getElementById(`body_${subjId}`);
+  if (!body) return;
+  body.classList.toggle('collapsed');
+}
+
+// ══════════════════════════════════════════════
+//   STATS UPDATE
+// ══════════════════════════════════════════════
+function updateStats() {
+  let total = 0, done = 0, pdf = 0, mock = 0;
+
+  SUBJECTS.forEach(s => {
+    s.chapters.forEach((name, idx) => {
+      if (isHeading(name)) return;
+      total++;
+      const cs = getChapState(s.id, idx);
+      if (cs.status === 'done') done++;
+      if (cs.pdf) pdf++;
+      if (cs.mock) mock++;
+    });
+  });
+
+  const allPdf = total;
+  const allMock = total;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-pdf').textContent = pdf;
+  document.getElementById('stat-mock').textContent = mock;
+
+  document.getElementById('bar-total').style.width = '100%';
+  document.getElementById('bar-done').style.width = total ? (done/total*100)+'%' : '0%';
+  document.getElementById('bar-pdf').style.width = allPdf ? (pdf/allPdf*100)+'%' : '0%';
+  document.getElementById('bar-mock').style.width = allMock ? (mock/allMock*100)+'%' : '0%';
+}
+
+// ══════════════════════════════════════════════
+//   FILTER
+// ══════════════════════════════════════════════
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSubjects();
+}
+
+function filterChapters() { renderSubjects(); }
+
+// ══════════════════════════════════════════════
+//   TOAST
+// ══════════════════════════════════════════════
+let toastTimer;
+function showToast(icon, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ══════════════════════════════════════════════
+//   EXPORT TO IMAGE (Canvas)
+// ══════════════════════════════════════════════
+function openExportModal() {
+  drawExportCanvas();
+  document.getElementById('exportModal').classList.add('open');
+}
+function closeExportModal() {
+  document.getElementById('exportModal').classList.remove('open');
+}
+function handleModalClick(e) {
+  if (e.target === document.getElementById('exportModal')) closeExportModal();
+}
+
+function drawExportCanvas() {
+  const canvas = document.getElementById('exportCanvas');
+  const W = 900, H = 520;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // BG
+  const bgGrad = ctx.createLinearGradient(0,0,W,H);
+  bgGrad.addColorStop(0, '#0a0c0f');
+  bgGrad.addColorStop(1, '#111820');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,W,H);
+
+  // Gold top border
+  ctx.fillStyle = '#d4a843';
+  ctx.fillRect(0,0,W,4);
+
+  // Star badge (police star shape)
+  drawStar(ctx, 54, 54, 26, 5, '#d4a843', 0.4);
+
+  // Header text
+  ctx.fillStyle = '#eef0f4';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText('UP POLICE CONSTABLE 2026', 92, 44);
+  ctx.fillStyle = '#d4a843';
+  ctx.font = '13px monospace';
+  ctx.fillText('STUDY PROGRESS REPORT  •  32679 POSTS  •  EXAM: JUNE 8, 2026', 92, 66);
+
+  // Date/time stamp
+  const now = new Date();
+  const dtStr = now.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true });
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '11px monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('Snapshot: ' + dtStr, W - 28, 44);
+
+  // Days left
+  const exam = new Date('2026-06-08T00:00:00');
+  const daysLeft = Math.max(0, Math.floor((exam - now) / 86400000));
+  ctx.fillStyle = daysLeft < 30 ? '#e05252' : '#d4a843';
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText(daysLeft + ' days left', W - 28, 62);
+  ctx.textAlign = 'left';
+
+  // Divider
+  ctx.strokeStyle = '#2a3040';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(28, 90); ctx.lineTo(W-28, 90); ctx.stroke();
+
+  // Calculate stats
+  let totalCh=0, doneCh=0, pdfDone=0, mockDone=0, videoDone=0;
+  const subjStats = SUBJECTS.map(s => {
+    let t=0, d=0, p=0, m=0;
+    s.chapters.forEach((name,idx) => {
+      if (isHeading(name)) return;
+      t++; totalCh++;
+      const cs = getChapState(s.id, idx);
+      if (cs.status==='done') { d++; doneCh++; }
+      if (cs.pdf) { p++; pdfDone++; }
+      if (cs.mock) { m++; mockDone++; }
+      if (cs.video) videoDone++;
+    });
+    return { name: s.name, emoji: s.emoji, total: t, done: d, pdf: p, mock: m, color: s.strokeColor };
+  });
+  const overallPct = totalCh ? Math.round(doneCh/totalCh*100) : 0;
+
+  // Overall big progress bar
+  const barX=28, barY=108, barW=W-56, barH=28;
+  ctx.fillStyle = '#1a1f2e';
+  roundRect(ctx, barX, barY, barW, barH, 8);
+  ctx.fill();
+
+  if (overallPct > 0) {
+    const fillW = Math.max(8, (overallPct/100)*barW);
+    const fillGrad = ctx.createLinearGradient(barX,0,barX+fillW,0);
+    fillGrad.addColorStop(0,'#d4a843');
+    fillGrad.addColorStop(1,'#4e9a6f');
+    ctx.fillStyle = fillGrad;
+    roundRect(ctx, barX, barY, fillW, barH, 8);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#eef0f4';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('OVERALL COMPLETION: ' + overallPct + '%  (' + doneCh + '/' + totalCh + ' chapters)', W/2, barY+19);
+  ctx.textAlign = 'left';
+
+  // SUBJECT CARDS (2 rows x 2)
+  const cX = [28, W/2+8];
+  const cY = [154, 290];
+  const cW = W/2 - 40;
+  const cH = 118;
+
+  subjStats.forEach((s, i) => {
+    const x = cX[i%2];
+    const y = cY[Math.floor(i/2)];
+    const pct = s.total ? Math.round(s.done/s.total*100) : 0;
+
+    // Card bg
+    ctx.fillStyle = '#111418';
+    roundRect(ctx, x, y, cW, cH, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#2a3040';
+    ctx.lineWidth = 1;
+    roundRect(ctx, x, y, cW, cH, 10);
+    ctx.stroke();
+
+    // Color accent top
+    ctx.fillStyle = s.color;
+    roundRect(ctx, x, y, cW, 3, {tl:10,tr:10,bl:0,br:0});
+    ctx.fill();
+
+    // Subject name
+    ctx.fillStyle = '#eef0f4';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText(s.name, x+14, y+26);
+
+    // % right
+    ctx.fillStyle = s.color;
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(pct + '%', x+cW-14, y+30);
+    ctx.textAlign = 'left';
+
+    // Mini progress bar
+    const mbY = y+38;
+    ctx.fillStyle = '#1a1f2e';
+    roundRect(ctx, x+14, mbY, cW-28, 8, 4);
+    ctx.fill();
+    if (pct>0) {
+      ctx.fillStyle = s.color;
+      roundRect(ctx, x+14, mbY, Math.max(4,(pct/100)*(cW-28)), 8, 4);
+      ctx.fill();
+    }
+
+    // Stats row
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '11px monospace';
+    ctx.fillText(s.done + '/' + s.total + ' done', x+14, y+68);
+
+    // PDF / MOCK tags
+    const tags = [
+      { label:'PDF '+s.pdf+'/'+s.total, on: s.pdf===s.total, col:'#3b7ec8' },
+      { label:'MOCK '+s.mock+'/'+s.total, on: s.mock===s.total, col:'#d4a843' },
+    ];
+    tags.forEach((tag,ti) => {
+      const tx = x+14 + ti*120;
+      const ty = y+80;
+      ctx.fillStyle = tag.on ? tag.col : 'rgba(42,48,64,0.8)';
+      roundRect(ctx, tx, ty, 112, 26, 6);
+      ctx.fill();
+      ctx.fillStyle = tag.on ? '#fff' : '#6b7280';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText(tag.label, tx+8, ty+17);
+    });
+  });
+
+  // Bottom stats row
+  const statsY = 430;
+  ctx.strokeStyle = '#2a3040';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(28, statsY-12); ctx.lineTo(W-28, statsY-12); ctx.stroke();
+
+  const weekDays = Object.values(weekStudied).filter(Boolean).length;
+  const bottomStats = [
+    { icon:'✅', label: 'Chapters Done', val: doneCh },
+    { icon:'📄', label: 'PDFs Read', val: pdfDone },
+    { icon:'🎯', label: 'Mocks Done', val: mockDone },
+    { icon:'📅', label: 'Study Days (This Week)', val: weekDays },
+    { icon:'⏳', label: 'Days to Exam', val: daysLeft },
+  ];
+  const colW = (W-56) / bottomStats.length;
+  bottomStats.forEach((st, i) => {
+    const bx = 28 + i*colW + colW/2;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#d4a843';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText(st.val, bx, statsY+20);
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(st.label, bx, statsY+36);
+  });
+  ctx.textAlign = 'left';
+
+  // Footer
+  ctx.fillStyle = '#2a3040';
+  ctx.fillRect(0, H-36, W, 36);
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('UP Police Constable 2026 — Personal Study Tracker  •  मेहनत का फल जरूर मिलेगा 🎖️', W/2, H-14);
+  ctx.textAlign = 'left';
+
+  // Store filename with date
+  canvas._filename = 'UP_Police_Progress_' + now.toISOString().slice(0,10) + '_' + now.getHours()+'h'+now.getMinutes()+'m' + '.png';
+}
+
+function drawStar(ctx, cx, cy, outerR, points, color, opacity) {
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for(let i=0;i<points*2;i++){
+    const r = i%2===0 ? outerR : outerR*0.45;
+    const angle = (i*Math.PI/points) - Math.PI/2;
+    if(i===0) ctx.moveTo(cx+r*Math.cos(angle), cy+r*Math.sin(angle));
+    else ctx.lineTo(cx+r*Math.cos(angle), cy+r*Math.sin(angle));
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  if (typeof r === 'object') {
+    const {tl=0,tr=0,bl=0,br=0} = r;
+    ctx.beginPath();
+    ctx.moveTo(x+tl, y);
+    ctx.lineTo(x+w-tr, y); ctx.quadraticCurveTo(x+w,y,x+w,y+tr);
+    ctx.lineTo(x+w, y+h-br); ctx.quadraticCurveTo(x+w,y+h,x+w-br,y+h);
+    ctx.lineTo(x+bl, y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-bl);
+    ctx.lineTo(x, y+tl); ctx.quadraticCurveTo(x,y,x+tl,y);
+    ctx.closePath();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+  }
+}
+
+function downloadExport() {
+  const canvas = document.getElementById('exportCanvas');
+  const link = document.createElement('a');
+  link.download = canvas._filename || 'UP_Police_Progress.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('📸', 'Progress image saved! Add it to your collection!');
+}
+
+// ══════════════════════════════════════════════
+//   INIT
+// ══════════════════════════════════════════════
+function init() {
+  loadState();
+  updateCountdown();
+  setInterval(updateCountdown, 30000);
+  setMotivation();
+  setInterval(setMotivation, 60000);
+  renderWeekGrid();
+  renderSubjects();
+}
+
+init();
+</script>
+</body>
+</html>
